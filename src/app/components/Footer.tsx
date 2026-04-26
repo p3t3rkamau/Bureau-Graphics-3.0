@@ -3,6 +3,8 @@ import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Twitter } from 'luci
 import { Button } from './ui/button';
 
 export function Footer() {
+  const posUrl = import.meta.env.VITE_POS_URL || '/pos';
+
   return (
     <footer className="bg-gray-900 text-white">
       {/* CTA Section */}
@@ -237,6 +239,11 @@ export function Footer() {
           <p className="mb-2">© 2026 Bureau Graphics. All rights reserved.</p>
           <p className="flex items-center justify-center gap-2">
             <span>M-Pesa • Visa • Mastercard</span>
+          </p>
+          <p className="mt-3 text-[11px] text-gray-500">
+            <a href={posUrl} target="_blank" rel="noreferrer" className="hover:text-gray-300 transition-colors">
+              /pos
+            </a>
           </p>
         </div>
       </div>
