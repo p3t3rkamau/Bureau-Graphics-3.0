@@ -4,7 +4,8 @@ import { categories, products } from '../data/products';
 import { Button } from '../components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getWebsiteStockStatus } from '../services/sharedSync';
 
 const serviceGroups = [
   { title: 'Campaign Materials', category: 'election-printing' },
@@ -22,6 +23,13 @@ const faqItems = [
 
 export function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [, forceStockSync] = useState(0);
+
+  useEffect(() => {
+    const sync = () => forceStockSync((prev) => prev + 1);
+    window.addEventListener('inventory-sync', sync);
+    return () => window.removeEventListener('inventory-sync', sync);
+  }, []);
 
   return (
     <div className="bg-white">
@@ -48,6 +56,9 @@ export function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {products.slice(0, 8).map((product) => (
+              (() => {
+                const stock = getWebsiteStockStatus(product);
+                return (
               <Link key={product.id} to={`/product/${product.id}`} className="border border-gray-200 rounded-xl overflow-hidden hover:border-[#2B59C3]">
                 <div className="aspect-[4/3] bg-gray-100">
                   <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -55,8 +66,13 @@ export function Home() {
                 <div className="p-4">
                   <p className="font-semibold">{product.name}</p>
                   <p className="text-[#EF233C] font-bold mt-1">KES {product.price.toLocaleString()}</p>
+                  <p className={`text-xs mt-1 ${stock.available ? 'text-green-700' : 'text-amber-700'}`}>
+                    {stock.available ? `In stock${stock.quantity !== undefined ? ` (${stock.quantity})` : ''}` : 'Out of stock'}
+                  </p>
                 </div>
               </Link>
+                );
+              })()
             ))}
           </div>
         </div>
