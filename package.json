@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "dev:website": "vite",
+    "build:website": "vite build",
+    "dev:pos": "vite --config apps/pos/vite.config.ts",
+    "build:pos": "vite build --config apps/pos/vite.config.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

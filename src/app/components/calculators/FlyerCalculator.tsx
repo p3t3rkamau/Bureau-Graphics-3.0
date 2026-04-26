@@ -1,107 +1,99 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Product } from '../../data/products';
 import { PriceSummary } from './PriceSummary';
+import { usePricing } from '../../../hooks/usePricing';
+import { deliveryZones, freeDeliveryThreshold } from '../../pricing/config';
 
 interface Props { product: Product; }
 
-const FLYER_SIZES: Record<string, { label: string; priceEach: number }> = {
-  a6: { label: 'A6 (148×105mm)', priceEach: 5 },
-  a5: { label: 'A5 (210×148mm)', priceEach: 8 },
-  a4: { label: 'A4 (297×210mm)', priceEach: 15 },
-  dl: { label: 'DL (99×210mm)',  priceEach: 6 },
-};
-const FLYER_QTY = [100, 250, 500, 1000, 2000, 5000];
+const FLYER_QTY = [50, 100, 200, 400, 500, 1000, 2000];
 
 export function FlyerCalculator({ product }: Props) {
-  const [size, setSize]   = useState('a5');
-  const [sides, setSides] = useState<'single'|'double'>('single');
-  const [qty, setQty]     = useState(500);
+  const [size, setSize] = useState('A4');
+  const [sides, setSides] = useState<'single' | 'double'>('double');
   const [paper, setPaper] = useState('artpaper-150gsm');
+  const [quantity, setQuantity] = useState(50);
+  const [deliveryZone, setDeliveryZone] = useState('nairobi');
+  const [turnaround, setTurnaround] = useState<'standard' | 'express' | 'rush'>('standard');
+  const [designNeeded, setDesignNeeded] = useState(false);
 
-  const priceEach      = FLYER_SIZES[size].priceEach * (sides === 'double' ? 1.5 : 1);
-  const discount       = qty >= 2000 ? 0.15 : qty >= 1000 ? 0.1 : qty >= 500 ? 0.05 : 0;
-  const subtotal       = priceEach * qty;
-  const discountAmount = Math.round(subtotal * discount);
-  const total          = subtotal - discountAmount;
+  const input = useMemo(() => ({
+    productType: 'flyer' as const,
+    quantity,
+    deliveryZone,
+    turnaround,
+    options: { size, sides, paper, designNeeded },
+  }), [quantity, deliveryZone, turnaround, size, sides, paper, designNeeded]);
+
+  const { breakdown, total } = usePricing(input);
 
   const lineItems = [
-    { label: `${qty.toLocaleString()} × ${FLYER_SIZES[size].label} (${sides}-sided)`, value: `KES ${priceEach.toFixed(2)}/pc` },
-    { label: 'Subtotal', value: `KES ${Math.round(subtotal).toLocaleString()}` },
+    { label: 'Base price', value: `KES ${breakdown.basePrice.toLocaleString()}` },
+    { label: 'Option adjustments', value: `KES ${breakdown.optionCosts.toLocaleString()}` },
+    { label: 'Quantity discount', value: `− KES ${breakdown.quantityDiscount.toLocaleString()}` },
+    { label: 'Add-ons', value: `KES ${breakdown.addonsCost.toLocaleString()}` },
+    { label: `Turnaround (${turnaround})`, value: `KES ${breakdown.turnaroundFee.toLocaleString()}` },
+    { label: `Delivery (${deliveryZone})`, value: `KES ${breakdown.deliveryFee.toLocaleString()}` },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
-        <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
-          <div className="w-4 h-4 bg-[#EF233C] rounded-sm" />
-          <span className="font-semibold">Flyer Calculator</span>
+      <div className="bg-white rounded-lg shadow-lg p-6 space-y-5">
+        <h3 className="font-semibold">Flyer Pricing</h3>
+
+        <div className="grid grid-cols-2 gap-2">
+          {['A6', 'A5', 'A4', 'DL'].map((option) => (
+            <button key={option} onClick={() => setSize(option)} className={`p-2 border rounded ${size === option ? 'border-[#EF233C] bg-red-50' : 'border-gray-200'}`}>
+              {option}
+            </button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Flyer Size</label>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(FLYER_SIZES).map(([key, val]) => (
-              <button key={key} onClick={() => setSize(key)}
-                className={`p-3 border-2 rounded-lg text-left transition-all ${size === key ? 'border-[#EF233C] bg-red-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-medium text-sm">{val.label}</div>
-                <div className="text-xs text-[#EF233C] mt-0.5">from KES {val.priceEach}/pc</div>
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(['single', 'double'] as const).map((option) => (
+            <button key={option} onClick={() => setSides(option)} className={`p-2 border rounded capitalize ${sides === option ? 'border-[#EF233C] bg-red-50' : 'border-gray-200'}`}>
+              {option}-sided
+            </button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Print Sides</label>
-          <div className="grid grid-cols-2 gap-3">
-            {(['single','double'] as const).map(s => (
-              <button key={s} onClick={() => setSides(s)}
-                className={`p-4 border-2 rounded-lg text-center transition-all ${sides === s ? 'border-[#EF233C] bg-red-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-semibold text-sm capitalize">{s}-sided</div>
-                <div className="text-xs text-gray-500">{s === 'double' ? '+50%' : 'Standard'}</div>
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-3 gap-2">
+          {FLYER_QTY.map((qty) => (
+            <button key={qty} onClick={() => setQuantity(qty)} className={`p-2 border rounded ${quantity === qty ? 'border-[#EF233C] bg-red-50' : 'border-gray-200'}`}>
+              {qty}
+            </button>
+          ))}
+        </div>
+        {breakdown.selectedTier && <p className="text-xs text-green-700">Selected pricing tier: {breakdown.selectedTier.qty}+ pcs</p>}
+
+        <select value={deliveryZone} onChange={(e) => setDeliveryZone(e.target.value)} className="w-full border rounded p-2">
+          {Object.keys(deliveryZones).map((zone) => <option key={zone} value={zone}>{zone.toUpperCase()}</option>)}
+        </select>
+
+        <div className="grid grid-cols-3 gap-2">
+          {(['standard', 'express', 'rush'] as const).map((t) => (
+            <button key={t} onClick={() => setTurnaround(t)} className={`p-2 border rounded capitalize ${turnaround === t ? 'border-[#2B59C3] bg-blue-50' : 'border-gray-200'}`}>{t}</button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Paper Type</label>
-          <div className="space-y-2">
-            {[
-              { k: 'bond-80gsm',      l: 'Bond Paper 80gsm',  d: 'Lightweight, economical' },
-              { k: 'artpaper-150gsm', l: 'Artpaper 150gsm',   d: 'Glossy, recommended' },
-              { k: 'artpaper-200gsm', l: 'Artpaper 200gsm',   d: 'Premium thick feel' },
-            ].map(opt => (
-              <button key={opt.k} onClick={() => setPaper(opt.k)}
-                className={`w-full p-3 border-2 rounded-lg text-left transition-all ${paper === opt.k ? 'border-[#EF233C] bg-red-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-medium text-sm">{opt.l}</div>
-                <div className="text-xs text-gray-500">{opt.d}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={designNeeded} onChange={(e) => setDesignNeeded(e.target.checked)} />
+          Need design service (+KES 1,500)
+        </label>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Quantity</label>
-          <div className="grid grid-cols-3 gap-2">
-            {FLYER_QTY.map(q => (
-              <button key={q} onClick={() => setQty(q)}
-                className={`p-3 border-2 rounded-lg text-center transition-all ${qty === q ? 'border-[#EF233C] bg-red-50 text-[#EF233C]' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-bold text-sm">{q.toLocaleString()}</div>
-                <div className="text-xs text-gray-500">pcs</div>
-              </button>
-            ))}
-          </div>
-          {discount > 0 && <p className="text-green-600 text-xs mt-2">🎉 {discount * 100}% bulk discount applied!</p>}
-        </div>
+        <p className="text-xs text-gray-500">Free delivery above KES {freeDeliveryThreshold.toLocaleString()}.</p>
       </div>
 
       <PriceSummary
-        productId={product.id} productName={product.name} productImage={product.image}
-        price={product.price} originalPrice={product.originalPrice}
-        lineItems={lineItems} total={total}
-        discountAmount={discountAmount} discountLabel={discount > 0 ? `Bulk discount (${discount * 100}%)` : undefined}
-        cartConfig={{ size: FLYER_SIZES[size].label, sides, paper, qty }}
-        cartQty={qty}
+        productId={product.id}
+        productName={product.name}
+        productImage={product.image}
+        price={product.price}
+        originalPrice={product.originalPrice}
+        lineItems={lineItems}
+        total={total}
+        cartConfig={input.options}
+        cartQty={quantity}
       />
     </div>
   );
