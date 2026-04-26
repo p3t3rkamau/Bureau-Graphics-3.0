@@ -37,38 +37,42 @@ export function SalesPage() {
   };
 
   return (
-    <div className="grid lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 rounded-xl border bg-white p-4">
-        <h2 className="text-xl font-semibold mb-3">Sales Screen</h2>
-        <input className="w-full border rounded p-2 mb-3" placeholder="Search products / barcode" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <div className="grid md:grid-cols-2 gap-2">
+    <div className="grid lg:grid-cols-3 gap-5">
+      <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-2xl font-bold text-slate-900 mb-3">Sales Screen</h2>
+        <input className="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-[#2B59C3]/40" placeholder="Search products / barcode" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <div className="grid md:grid-cols-2 gap-3">
           {filtered.map((product) => (
-            <button key={product.id} className="text-left border rounded p-3 hover:border-[#2B59C3]" onClick={() => addToCart(product)}>
-              <p className="font-medium">{product.name}</p><p className="text-xs text-gray-500">Retail {formatKes(product.retailPrice)} | Wholesale {formatKes(product.wholesalePrice)}</p>
+            <button key={product.id} className="text-left border border-slate-200 rounded-xl p-3.5 hover:border-[#2B59C3] hover:bg-blue-50/40 transition" onClick={() => addToCart(product)}>
+              <p className="font-semibold text-slate-900">{product.name}</p><p className="text-xs text-slate-500 mt-1">Retail {formatKes(product.retailPrice)} | Wholesale {formatKes(product.wholesalePrice)}</p>
             </button>
           ))}
         </div>
       </div>
-      <div className="rounded-xl border bg-white p-4 space-y-3">
-        <h3 className="font-semibold">Cart / Receipt Preview</h3>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
+        <h3 className="font-semibold text-slate-900">Cart / Receipt Preview</h3>
         {cart.map((item) => (
-          <div key={item.productId} className="flex items-center justify-between text-sm border-b py-1">
-            <span>{item.name}</span>
+          <div key={item.productId} className="flex items-center justify-between text-sm border-b border-slate-100 py-2">
+            <span className="text-slate-700">{item.name}</span>
             <div className="flex gap-2 items-center">
-              <button onClick={() => setCart((prev) => prev.map((x) => x.productId === item.productId ? { ...x, quantity: Math.max(1, x.quantity - 1) } : x))}>-</button>
-              <span>{item.quantity}</span>
-              <button onClick={() => setCart((prev) => prev.map((x) => x.productId === item.productId ? { ...x, quantity: x.quantity + 1 } : x))}>+</button>
+              <button className="h-7 w-7 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setCart((prev) => prev.map((x) => x.productId === item.productId ? { ...x, quantity: Math.max(1, x.quantity - 1) } : x))}>-</button>
+              <span className="w-5 text-center font-medium">{item.quantity}</span>
+              <button className="h-7 w-7 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setCart((prev) => prev.map((x) => x.productId === item.productId ? { ...x, quantity: x.quantity + 1 } : x))}>+</button>
             </div>
           </div>
         ))}
-        <select className="w-full border rounded p-2" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>{customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        <input className="w-full border rounded p-2" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} placeholder="Discount" />
-        <input className="w-full border rounded p-2" type="number" value={vatRate} onChange={(e) => setVatRate(Number(e.target.value) || 0)} placeholder="VAT %" />
-        <select className="w-full border rounded p-2" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)}>
+        <select className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2B59C3]/40" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>{customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <input className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2B59C3]/40" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} placeholder="Discount" />
+        <input className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2B59C3]/40" type="number" value={vatRate} onChange={(e) => setVatRate(Number(e.target.value) || 0)} placeholder="VAT %" />
+        <select className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2B59C3]/40" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)}>
           <option value="cash">Cash</option><option value="mpesa">M-Pesa</option><option value="card">Card</option><option value="bank">Bank</option>
         </select>
-        <div className="text-sm space-y-1"><p>Subtotal: {formatKes(subtotal)}</p><p>VAT: {formatKes(vat)}</p><p className="font-bold text-[#EF233C]">Total: {formatKes(total)}</p></div>
-        <button className="w-full bg-[#EF233C] text-white rounded p-2" onClick={completeSale}>Complete Sale</button>
+        <div className="text-sm rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-1">
+          <p className="flex justify-between"><span className="text-slate-600">Subtotal</span><b className="text-slate-900">{formatKes(subtotal)}</b></p>
+          <p className="flex justify-between"><span className="text-slate-600">VAT</span><b className="text-slate-900">{formatKes(vat)}</b></p>
+          <p className="flex justify-between text-base"><span className="font-semibold text-slate-800">Total</span><b className="font-bold text-[#EF233C]">{formatKes(total)}</b></p>
+        </div>
+        <button className="w-full bg-[#EF233C] text-white rounded-lg py-2.5 font-semibold hover:bg-[#d61f35] transition shadow-sm" onClick={completeSale}>Complete Sale</button>
       </div>
     </div>
   );
