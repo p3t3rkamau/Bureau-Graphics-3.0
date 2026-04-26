@@ -18,7 +18,7 @@ interface PriceSummaryProps {
   totalLabel?: string;
   discountAmount?: number;
   discountLabel?: string;
-  cartConfig: Record<string, string | number>;
+  cartConfig: Record<string, string | number | boolean | undefined>;
   cartQty: number;
 }
 
