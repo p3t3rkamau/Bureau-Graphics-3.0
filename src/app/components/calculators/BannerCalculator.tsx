@@ -1,96 +1,91 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Product } from '../../data/products';
 import { PriceSummary } from './PriceSummary';
+import { usePricing } from '../../../hooks/usePricing';
+import { deliveryZones } from '../../pricing/config';
 
 interface Props { product: Product; }
 
-const BANNER_SIZES: Record<string, { label: string; price: number }> = {
-  '60x160': { label: '60cm × 160cm (Standard)', price: 3500 },
-  '80x200': { label: '80cm × 200cm (Tall)',     price: 4500 },
-  '100x200':{ label: '100cm × 200cm (Wide)',    price: 5500 },
-  'custom': { label: 'Custom Size',              price: 0   },
-};
-
 export function BannerCalculator({ product }: Props) {
-  const [size, setSize]         = useState('60x160');
-  const [finishing, setFinishing] = useState<'none'|'eyelets'|'pole-pockets'>('eyelets');
-  const [qty, setQty]           = useState(1);
+  const [size, setSize] = useState<'narrow' | 'broad'>('narrow');
+  const [material, setMaterial] = useState<'pvc' | 'premium' | 'mesh'>('pvc');
+  const [finishing, setFinishing] = useState<'eyelets' | 'pole-pockets' | 'none'>('eyelets');
+  const [quantity, setQuantity] = useState(1);
+  const [turnaround, setTurnaround] = useState<'standard' | 'express' | 'rush'>('standard');
+  const [deliveryZone, setDeliveryZone] = useState('cbd');
+  const [designNeeded, setDesignNeeded] = useState(false);
 
-  const basePrice      = size === 'custom' ? product.price : BANNER_SIZES[size].price;
-  const finishingExtra = finishing === 'pole-pockets' ? 200 : 0;
-  const priceEach      = basePrice + finishingExtra;
-  const discount       = qty >= 10 ? 0.1 : qty >= 5 ? 0.05 : 0;
-  const subtotal       = priceEach * qty;
-  const discountAmount = Math.round(subtotal * discount);
-  const total          = subtotal - discountAmount;
+  const input = useMemo(() => ({
+    productType: 'banner' as const,
+    quantity,
+    turnaround,
+    deliveryZone,
+    options: { size, material, finishing, designNeeded },
+  }), [quantity, turnaround, deliveryZone, size, material, finishing, designNeeded]);
+
+  const { breakdown, total } = usePricing(input);
 
   const lineItems = [
-    { label: `${BANNER_SIZES[size]?.label ?? 'Custom'} × ${qty}`, value: `KES ${priceEach.toLocaleString()} each` },
-    ...(finishingExtra > 0 ? [{ label: 'Pole pockets', value: `+ KES ${finishingExtra}` }] : []),
-    { label: 'Subtotal', value: `KES ${subtotal.toLocaleString()}` },
+    { label: 'Base price', value: `KES ${breakdown.basePrice.toLocaleString()}` },
+    { label: 'Option adjustments', value: `KES ${breakdown.optionCosts.toLocaleString()}` },
+    { label: 'Quantity discount', value: `− KES ${breakdown.quantityDiscount.toLocaleString()}` },
+    { label: 'Add-ons', value: `KES ${breakdown.addonsCost.toLocaleString()}` },
+    { label: 'Turnaround fee', value: `KES ${breakdown.turnaroundFee.toLocaleString()}` },
+    { label: 'Delivery fee', value: `KES ${breakdown.deliveryFee.toLocaleString()}` },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
-        <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
-          <div className="w-4 h-4 bg-[#EF233C] rounded-sm" />
-          <span className="font-semibold">Banner Calculator</span>
+      <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
+        <h3 className="font-semibold">Banner Pricing</h3>
+
+        <div className="grid grid-cols-2 gap-2">
+          {(['narrow', 'broad'] as const).map((option) => (
+            <button key={option} onClick={() => setSize(option)} className={`p-2 border rounded ${size === option ? 'border-[#EF233C] bg-red-50' : 'border-gray-200'}`}>{option}</button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Banner Size</label>
-          <div className="space-y-2">
-            {Object.entries(BANNER_SIZES).map(([key, val]) => (
-              <button key={key} onClick={() => setSize(key)}
-                className={`w-full p-4 border-2 rounded-lg text-left transition-all ${size === key ? 'border-[#EF233C] bg-red-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-sm">{val.label}</span>
-                  <span className="text-[#EF233C] text-sm font-medium">{val.price > 0 ? `KES ${val.price.toLocaleString()}` : 'Contact us'}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-3 gap-2">
+          {(['pvc', 'premium', 'mesh'] as const).map((option) => (
+            <button key={option} onClick={() => setMaterial(option)} className={`p-2 border rounded ${material === option ? 'border-[#EF233C] bg-red-50' : 'border-gray-200'}`}>{option}</button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Finishing</label>
-          <div className="space-y-2">
-            {[
-              { key: 'eyelets',      label: 'Eyelets (Included)',  desc: 'Metal rings for hanging' },
-              { key: 'pole-pockets', label: 'Pole Pockets',        desc: '+KES 200' },
-              { key: 'none',         label: 'No Finishing',         desc: 'Raw print only' },
-            ].map(opt => (
-              <button key={opt.key} onClick={() => setFinishing(opt.key as typeof finishing)}
-                className={`w-full p-3 border-2 rounded-lg text-left transition-all ${finishing === opt.key ? 'border-[#EF233C] bg-red-50' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-medium text-sm">{opt.label}</div>
-                <div className="text-xs text-gray-500">{opt.desc}</div>
-              </button>
-            ))}
-          </div>
+        <select className="w-full border rounded p-2" value={finishing} onChange={(e) => setFinishing(e.target.value as typeof finishing)}>
+          <option value="eyelets">Eyelets (included)</option>
+          <option value="pole-pockets">Pole pockets (+KES 200)</option>
+          <option value="none">No finishing</option>
+        </select>
+
+        <input className="w-full border rounded p-2" type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} />
+        {breakdown.selectedTier && <p className="text-xs text-green-700">Selected pricing tier: {breakdown.selectedTier.qty}+ units</p>}
+
+        <select value={deliveryZone} onChange={(e) => setDeliveryZone(e.target.value)} className="w-full border rounded p-2">
+          {Object.keys(deliveryZones).map((zone) => <option key={zone} value={zone}>{zone.toUpperCase()}</option>)}
+        </select>
+
+        <div className="grid grid-cols-3 gap-2">
+          {(['standard', 'express', 'rush'] as const).map((t) => (
+            <button key={t} onClick={() => setTurnaround(t)} className={`p-2 border rounded capitalize ${turnaround === t ? 'border-[#2B59C3] bg-blue-50' : 'border-gray-200'}`}>{t}</button>
+          ))}
         </div>
 
-        <div>
-          <label className="block mb-3 font-medium text-sm">Quantity</label>
-          <div className="grid grid-cols-5 gap-2">
-            {[1, 2, 3, 5, 10].map(q => (
-              <button key={q} onClick={() => setQty(q)}
-                className={`p-3 border-2 rounded-lg text-center transition-all ${qty === q ? 'border-[#EF233C] bg-red-50 text-[#EF233C]' : 'border-gray-200 hover:border-gray-400'}`}>
-                <div className="font-bold text-sm">{q}</div>
-              </button>
-            ))}
-          </div>
-          {qty >= 5 && <p className="text-green-600 text-xs mt-2">🎉 {qty >= 10 ? '10%' : '5%'} bulk discount applied!</p>}
-        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={designNeeded} onChange={(e) => setDesignNeeded(e.target.checked)} />
+          Need banner design (+KES 2,000)
+        </label>
       </div>
 
       <PriceSummary
-        productId={product.id} productName={product.name} productImage={product.image}
-        price={product.price} originalPrice={product.originalPrice}
-        lineItems={lineItems} total={total}
-        discountAmount={discountAmount} discountLabel={discount > 0 ? `Bulk discount (${discount * 100}%)` : undefined}
-        cartConfig={{ size: BANNER_SIZES[size]?.label ?? 'Custom', finishing, qty }}
-        cartQty={qty}
+        productId={product.id}
+        productName={product.name}
+        productImage={product.image}
+        price={product.price}
+        originalPrice={product.originalPrice}
+        lineItems={lineItems}
+        total={total}
+        cartConfig={input.options}
+        cartQty={quantity}
       />
     </div>
   );

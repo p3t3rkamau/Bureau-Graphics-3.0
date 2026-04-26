@@ -210,6 +210,30 @@ export const products: Product[] = [
     image: 'https://images.unsplash.com/photo-1678872844677-d650b788709b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmludGVkJTIwdHNoaXJ0JTIwY29sb3JmdWx8ZW58MXx8fHwxNzc0MDA0MzA0fDA&ixlib=rb-4.1.0&q=80&w=1080',
     description: 'Custom branded t-shirts with your design',
   },
+  {
+    id: 'branded-hoodies',
+    name: 'Branded Hoodies',
+    category: 'branded-apparel',
+    price: 2700,
+    image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80',
+    description: 'Premium hoodies with logo and campaign branding for teams and organizations.',
+  },
+  {
+    id: 'door-plates',
+    name: 'Door Plates',
+    category: 'signages',
+    price: 1250,
+    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+    description: 'Professional office and directional door plates in acrylic, PVC, and brushed metal finishes.',
+  },
+  {
+    id: 'mounted-photos',
+    name: 'Mounted Photos Printing',
+    category: 'photo-printing',
+    price: 796,
+    image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1200&q=80',
+    description: 'Photo mounting and framing options for studios, homes, and event galleries.',
+  },
 ];
 
 export const getProductsByCategory = (category: string) => {
