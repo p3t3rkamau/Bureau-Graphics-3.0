@@ -139,9 +139,12 @@ export interface Invoice {
   items: SaleItem[];
   subtotal: number;
   vatTotal: number;
+  discountTotal?: number;
   total: number;
   dueDate: string;
+  paymentTermDays?: number;
   status: InvoiceStatus;
+  notes?: string;
   createdAt: string;
 }
 
@@ -155,6 +158,7 @@ export interface Quotation {
   total: number;
   validUntil: string;
   status: QuotationStatus;
+  notes?: string;
   createdAt: string;
 }
 

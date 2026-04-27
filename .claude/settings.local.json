@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\USER\\.claude\\projects\\c--Users-USER-OneDrive-Documents-GitHub-Bureau-Graphics-3-0\\memory"
+    ]
+  }
+}
